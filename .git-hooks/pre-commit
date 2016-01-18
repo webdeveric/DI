@@ -1,0 +1,24 @@
+#!/bin/bash
+
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[0;33m'
+NC='\033[0m' # No color
+
+if [ ! -f ./vendor/bin/phpcs ]; then
+  echo -e "${RED}phpcs not found. ${YELLOW}Did you run composer install?${NC}\n"
+  exit 1
+fi
+
+echo -n -e "${YELLOW}Checking coding standards...${NC} "
+
+./vendor/bin/phpcs --standard=PSR2 --encoding=utf-8 ./src/
+
+if [ $? != 0 ]; then
+  echo -e "${RED}Please fix the errors before committing.${NC}\n"
+  exit 1
+fi
+
+echo -e "${GREEN}OK${NC}"
+
+exit 0;
