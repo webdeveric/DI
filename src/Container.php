@@ -400,8 +400,12 @@ class Container implements ArrayAccess, IteratorAggregate
      * @param callable $callback
      * @return false|object
      */
-    public function offsetSet($key, callable $callback)
+    public function offsetSet($key, $callback)
     {
+        if (!is_callable($callback)) {
+            return false;
+        }
+
         return $this->register($key, $callback);
     }
 
