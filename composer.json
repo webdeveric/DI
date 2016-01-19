@@ -2,7 +2,7 @@
   "name": "webdeveric/DI",
   "license": "proprietary",
   "description": "",
-  "keywords": [ "Dependency", "Injection" ],
+  "keywords": [ "dependency injection", "container" ],
   "authors": [
     {
       "name": "Eric King",
