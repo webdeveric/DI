@@ -5,13 +5,17 @@
 **Example usage:**
 
 ```php
-use webdeveric\DI\Container;
+use webdeveric\DI\DI;
 
-$container = new Container();
+$container = new DI();
 
-$container->thing = function() {
-  return new Thing;
+$container->person = function() {
+  $person = new stdClass;
+  $person->name = "Test Testerson";
+  return $person;
 };
+
+var_dump( $container->person->name );
 ```
 
 ## Local Development
@@ -24,3 +28,7 @@ Run `composer install` to get dependencies.
 
 There is a `pre-commit` hook that will run `phpcs` to check the coding style.
 If it fails, you will not be allowed to commit.
+
+### Tests
+
+If you add a feature, please create a test for it too.
