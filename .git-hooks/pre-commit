@@ -1,24 +1,40 @@
-#!/bin/bash
+#!/bin/sh
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No color
 
+# Verify coding standards
 if [ ! -f ./vendor/bin/phpcs ]; then
-  echo -e "${RED}phpcs not found. ${YELLOW}Did you run composer install?${NC}\n"
+  echo "${RED}phpcs not found. ${YELLOW}Did you run composer install?${NC}"
   exit 1
 fi
 
-echo -n -e "${YELLOW}Checking coding standards...${NC} "
+echo -n "${YELLOW}Checking coding standards...${NC} "
 
-./vendor/bin/phpcs --standard=PSR2 --encoding=utf-8 ./src/
+./vendor/bin/phpcs --standard=PSR2 --encoding=utf-8 ./src/ ./tests/
 
 if [ $? != 0 ]; then
-  echo -e "${RED}Please fix the errors before committing.${NC}\n"
+  echo "${RED}Please fix the errors before committing.${NC}"
+  exit 1
+else
+  echo "${GREEN}OK${NC}"
+fi
+
+# Run unit tests
+if [ ! -f ./vendor/bin/phpunit ]; then
+  echo "${RED}phpunit not found. ${YELLOW}Did you run composer install?${NC}"
   exit 1
 fi
 
-echo -e "${GREEN}OK${NC}"
+echo -n "${YELLOW}Running tests...${NC} "
+
+./vendor/bin/phpunit
+
+if [ $? != 0 ]; then
+  echo "${RED}Please make sure the tests pass before committing.${NC}"
+  exit 1
+fi
 
 exit 0;
