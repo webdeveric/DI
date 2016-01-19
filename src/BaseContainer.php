@@ -220,7 +220,9 @@ class BaseContainer
      */
     public function has($name)
     {
-        foreach ([ 'callbacks', 'objects', 'aliases', 'arguments' ] as &$field) {
+        $fields = [ 'callbacks', 'objects', 'aliases', 'arguments' ];
+
+        foreach ($fields as &$field) {
             if (array_key_exists($name, $this->$field)) {
                 return true;
             }
