@@ -10,9 +10,6 @@ namespace webdeveric\DI;
 use SplObjectStorage;
 use Closure;
 use Exception;
-use ArrayAccess;
-use ArrayIterator;
-use IteratorAggregate;
 use ReflectionClass;
 use ReflectionException;
 use ReflectionParameter;
@@ -32,11 +29,8 @@ use webdeveric\DI\Exceptions\UnresolvableParameterException;
  * 3. The objects are not instantiated until requested.
  * 4. Create aliases for classes/interfaces.
  *    This is so you can associate an abstract class or interface to a concrete class instance (1) or factory (2)
- * 5. The default behavior when assigning a property to the container is to treat that like (1)
- *    The `$name` passed to `__set` will become the `$alias` and the `$value` is
- *    the callable used to instantiate the singleton.
  */
-class Container implements ArrayAccess, IteratorAggregate
+class BaseContainer
 {
     /**
      * @var array
@@ -112,6 +106,28 @@ class Container implements ArrayAccess, IteratorAggregate
     }
 
     /**
+     * Remove any objects, callbacks, factories, aliases, and arguments that are keyed by $name.
+     * @param string $name
+     * @return void
+     */
+    public function unregister($name)
+    {
+        if (isset($this->callbacks[ $name ])) {
+            $callback = $this->callbacks[ $name ];
+            if ($this->factories->contains($callback)) {
+                $this->factories->detach($callback);
+            }
+        }
+
+        unset(
+            $this->objects[ $name ],
+            $this->callbacks[ $name ],
+            $this->aliases[ $name ],
+            $this->arguments[ $name ]
+        );
+    }
+
+    /**
      * Define an alias.
      *
      * @param  string $from
@@ -147,7 +163,6 @@ class Container implements ArrayAccess, IteratorAggregate
                     sprintf('Alias resolve limit (50) reached for %1$s at alias %1$s', func_get_arg(0), $alias)
                 );
             }
-
         } while (isset($this->aliases[ $alias ])); // Do it again if there is another alias for the current $alias
 
         return $alias;
@@ -184,6 +199,20 @@ class Container implements ArrayAccess, IteratorAggregate
     }
 
     /**
+     * Determine if $name is a factory.
+     * @param string $name
+     * @return bool
+     */
+    public function isFactory($name)
+    {
+        if (isset($this->callbacks[ $name ])) {
+            return $this->factories->contains($this->callbacks[ $name ]);
+        }
+
+        return false;
+    }
+
+    /**
      * Determine if a name has been registered with the container.
      *
      * @param  string $name
@@ -209,9 +238,7 @@ class Container implements ArrayAccess, IteratorAggregate
     public function get($name)
     {
         foreach ([ false, true ] as $lowercase) {
-
             try {
-
                 if ($lowercase) {
                     $name = strtolower($name);
                 }
@@ -223,22 +250,23 @@ class Container implements ArrayAccess, IteratorAggregate
                     return $this->objects[ $name ];
                 }
 
-                // First initialization OR call factory
+                // Do we have a registered way to build the instance?
                 if (isset($this->callbacks[ $name ])) {
+                    $callback = $this->callbacks[ $name ];
+                    $object = $callback($this);
 
-                    if ($this->factories->contains($this->callbacks[ $name ])) {
-                        return $this->callbacks[ $name ]( $this );
+                    // If the callback is a factory, always get an instance from it.
+                    if ($this->factories->contains($callback)) {
+                        return $object;
                     }
 
-                    return $this->objects[ $name ] = $this->callbacks[ $name ]( $this );
+                    return $this->objects[ $name ] = $object;
                 }
 
+                // Figure it out with Reflection.
                 return $this->resolve($name);
-
             } catch (Exception $e) {
-
                 throw new UnresolvableClassException($e->getMessage());
-
             }
         }
     }
@@ -269,22 +297,12 @@ class Container implements ArrayAccess, IteratorAggregate
     public function resolve($name)
     {
         try {
-
             $ref = new ReflectionClass($name);
 
             if ($ref->isInstantiable()) {
-
                 $constructor = $ref->getConstructor();
 
-                if (is_null($constructor)) {
-                    // Nothing to construct so no arguments are needed
-                    return new $name;
-                }
-
-                $params = $constructor->getParameters();
-
-                if (empty($params)) {
-                    // Constructor doesn't take any parameters so just construct it and send it back.
+                if (is_null($constructor) || empty($params = $constructor->getParameters())) {
                     return new $name;
                 }
 
@@ -307,11 +325,8 @@ class Container implements ArrayAccess, IteratorAggregate
                 default:
                     throw new UnresolvableClassException("Unresolvable Class [ $name ]");
             }
-
         } catch (ReflectionException $e) { // Class does not exist
-
             throw new UnresolvableClassException($e->getMessage());
-
         }
     }
 
@@ -328,7 +343,6 @@ class Container implements ArrayAccess, IteratorAggregate
         $ref_class = $param->getClass();
 
         if (is_null($ref_class)) {
-
             if ($param->isDefaultValueAvailable()) {
                 return $param->getDefaultValue();
             }
@@ -338,109 +352,8 @@ class Container implements ArrayAccess, IteratorAggregate
             }
 
             throw new UnresolvableParameterException(sprintf('Unresolvable %2$s - %1$s', $param, $ref->getName()));
-
         } else {
-
             return $this->get($ref_class->name);
-
         }
-    }
-
-    /**
-     * @param string $name
-     * @return object
-     */
-    public function __invoke($name)
-    {
-        return $this->get($name);
-    }
-
-    /**
-     * @param string $name
-     * @return object
-     */
-    public function __get($name)
-    {
-        return $this->get($name);
-    }
-
-    /**
-     * @param string   $name
-     * @param callable $callback
-     * @return false|object
-     */
-    public function __set($name, callable $callback)
-    {
-        return $this->register($name, $callback);
-    }
-
-    /**
-     * @param string $name
-     * @return bool
-     */
-    public function __isset($name)
-    {
-        return isset($this->objects[ $name ]);
-    }
-
-    /**
-     * @param string $name
-     * @return void
-     */
-    public function __unset($name)
-    {
-        if (isset($this->objects[ $name ])) {
-            // $this->factories->detach( $this->objects[ $name ] );
-            unset($this->objects[ $name ]);
-        }
-    }
-
-    /**
-     * @param string   $key
-     * @param callable $callback
-     * @return false|object
-     */
-    public function offsetSet($key, $callback)
-    {
-        if (!is_callable($callback)) {
-            return false;
-        }
-
-        return $this->register($key, $callback);
-    }
-
-    /**
-     * @param string $key
-     * @return object
-     */
-    public function offsetGet($key)
-    {
-        return $this->get($key);
-    }
-
-    /**
-     * @param string $key
-     * @return void
-     */
-    public function offsetUnset($key)
-    {
-        $this->__unset($key);
-    }
-
-    /**
-     * @param string $key
-     * @return bool
-     */
-    public function offsetExists($key)
-    {
-        return $this->__isset($key);
-    }
-
-    /**
-     * @return ArrayIterator
-     */
-    public function getIterator()
-    {
-        return new ArrayIterator($this->objects);
     }
 }
