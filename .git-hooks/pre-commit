@@ -1,39 +1,43 @@
-#!/bin/sh
+#!/bin/bash
 
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[0;33m'
 NC='\033[0m' # No color
 
+if [ -f ~/.bash_profile ]; then
+  source ~/.bash_profile
+fi
+
 # Verify coding standards
 if [ ! -f ./vendor/bin/phpcs ]; then
-  echo "${RED}phpcs not found. ${YELLOW}Did you run composer install?${NC}"
+  printf "${RED}phpcs not found. ${YELLOW}Did you run composer install?${NC}\n"
   exit 1
 fi
 
-echo -n "${YELLOW}Checking coding standards...${NC} "
+printf "${YELLOW}Checking coding standards...${NC} "
 
 ./vendor/bin/phpcs --standard=PSR2 --encoding=utf-8 ./src/ ./tests/
 
 if [ $? != 0 ]; then
-  echo "${RED}Please fix the errors before committing.${NC}"
+  printf "${RED}Please fix the errors before committing.${NC}\n"
   exit 1
 else
-  echo "${GREEN}OK${NC}"
+  printf "${GREEN}OK${NC}\n"
 fi
 
 # Run unit tests
 if [ ! -f ./vendor/bin/phpunit ]; then
-  echo "${RED}phpunit not found. ${YELLOW}Did you run composer install?${NC}"
+  printf "${RED}phpunit not found. ${YELLOW}Did you run composer install?${NC}\n"
   exit 1
 fi
 
-echo -n "${YELLOW}Running tests...${NC} "
+printf "${YELLOW}Running tests...${NC} "
 
 ./vendor/bin/phpunit
 
 if [ $? != 0 ]; then
-  echo "${RED}Please make sure the tests pass before committing.${NC}"
+  printf "${RED}Please make sure the tests pass before committing.${NC}\n"
   exit 1
 fi
 
