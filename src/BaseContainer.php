@@ -304,7 +304,15 @@ class BaseContainer
             if ($ref->isInstantiable()) {
                 $constructor = $ref->getConstructor();
 
-                if (is_null($constructor) || empty($params = $constructor->getParameters())) {
+                if (is_null($constructor)) {
+                    // Nothing to construct so no arguments are needed
+                    return new $name;
+                }
+
+                $params = $constructor->getParameters();
+
+                if (empty($params)) {
+                    // Constructor doesn't take any parameters so just construct it and send it back.
                     return new $name;
                 }
 
