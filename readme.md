@@ -1,5 +1,7 @@
 # Dependency Injection
 
+[![Build Status](https://travis-ci.org/webdeveric/DI.svg?branch=master)](https://travis-ci.org/webdeveric/DI)
+
 **Example usage:**
 
 ```php
