@@ -23,7 +23,8 @@
     "phpunit/phpunit": "^5.1",
     "phpdocumentor/phpdocumentor": "^2.8",
     "squizlabs/php_codesniffer": "^2.5",
-    "phpmd/phpmd": "^2.3"
+    "phpmd/phpmd": "^2.3",
+    "codeclimate/php-test-reporter": "dev-master"
   },
   "scripts": {
     "post-install-cmd": [

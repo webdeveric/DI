@@ -1,6 +1,9 @@
 # Dependency Injection
 
 [![Build Status](https://travis-ci.org/webdeveric/DI.svg?branch=master)](https://travis-ci.org/webdeveric/DI)
+[![Test Coverage](https://codeclimate.com/github/webdeveric/DI/badges/coverage.svg)](https://codeclimate.com/github/webdeveric/DI/coverage)
+[![Code Climate](https://codeclimate.com/github/webdeveric/DI/badges/gpa.svg)](https://codeclimate.com/github/webdeveric/DI)
+[![Issue Count](https://codeclimate.com/github/webdeveric/DI/badges/issue_count.svg)](https://codeclimate.com/github/webdeveric/DI)
 
 **Example usage:**
 
