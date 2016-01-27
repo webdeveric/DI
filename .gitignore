@@ -1,4 +1,5 @@
 .DS_Store
 vendor/
 docs/
+build/
 phpmd-report.xml
