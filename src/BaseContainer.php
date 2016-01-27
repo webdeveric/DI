@@ -60,7 +60,7 @@ class BaseContainer
     /**
      * @var int
      */
-    protected $alias_resolve_limit;
+    protected $aliasResolveLimit;
 
     /**
      * Create a new Container instance.
@@ -72,7 +72,7 @@ class BaseContainer
         $this->aliases   = [];
         $this->arguments = [];
         $this->factories = new SplObjectStorage();
-        $this->alias_resolve_limit = 50;
+        $this->aliasResolveLimit = 50;
     }
 
     /**
@@ -130,13 +130,13 @@ class BaseContainer
     /**
      * Define an alias.
      *
-     * @param  string $from
-     * @param  string $to
+     * @param  string $alias
+     * @param  string $original
      * @return void
      */
-    public function alias($from, $to)
+    public function alias($alias, $original)
     {
-        $this->aliases[ $from ] = $to;
+        $this->aliases[ $alias ] = $original;
     }
 
     /**
@@ -158,7 +158,7 @@ class BaseContainer
         do {
             $alias = $this->aliases[ $alias ];
 
-            if (++$counter > $this->alias_resolve_limit) {
+            if (++$counter > $this->aliasResolveLimit) {
                 throw new UnresolvableAliasException(
                     sprintf('Alias resolve limit (50) reached for %1$s at alias %1$s', func_get_arg(0), $alias)
                 );
@@ -350,9 +350,9 @@ class BaseContainer
      */
     protected function resolveParameter(ReflectionParameter $param, ReflectionClass $ref)
     {
-        $ref_class = $param->getClass();
+        $refClass = $param->getClass();
 
-        if (is_null($ref_class)) {
+        if (is_null($refClass)) {
             if ($param->isDefaultValueAvailable()) {
                 return $param->getDefaultValue();
             }
@@ -362,8 +362,8 @@ class BaseContainer
             }
 
             throw new UnresolvableParameterException(sprintf('Unresolvable %2$s - %1$s', $param, $ref->getName()));
-        } else {
-            return $this->get($ref_class->name);
         }
+
+        return $this->get($refClass->name);
     }
 }
