@@ -9,7 +9,8 @@ php:
 
 before_script:
   - composer self-update
-  - composer install --no-interaction
+  - composer install --no-interaction --no-dev
+  - composer require codeclimate/php-test-reporter=dev-master
   - composer dump-autoload -o
 
 script: phpunit
