@@ -19,20 +19,21 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
         unset($this->container);
     }
 
+    public function createObject()
+    {
+        return new stdClass;
+    }
+
     public function testConstructor()
     {
-        $this->assertTrue($this->container instanceof BaseContainer);
+        $this->assertInstanceOf('webdeveric\DI\BaseContainer', $this->container);
     }
 
     public function testClassNotFound()
     {
-        try {
-            $this->container->get('SomeFakeClassName');
-        } catch (UnresolvableClassException $e) {
-            return;
-        }
+        $this->setExpectedException('\webdeveric\DI\Exceptions\UnresolvableClassException');
 
-        $this->fail('An expected exception has not been raised.');
+        $this->container->get('SomeFakeClassName');
     }
 
     public function testFactory()
@@ -48,6 +49,8 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue($this->container->isFactory('name'));
 
+        $this->assertFalse($this->container->isFactory('notAFactory'));
+
         $this->assertNotEquals($this->container->get('name'), $this->container->get('name'));
     }
 
@@ -62,6 +65,7 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
         $this->container->alias('me', 'eric');
 
         $this->assertTrue($this->container->has('eric'));
+
         $this->assertTrue($this->container->has('me'));
 
         $me = $this->container->get('me');
@@ -74,10 +78,27 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
     public function testInstance()
     {
         $name = new stdClass;
+
         $this->container->instance('name', $name);
 
         $this->assertTrue($this->container->has('name'));
+
         $this->assertEquals($this->container->get('name'), $name);
+
+        $this->assertFalse($this->container->instance('false', false));
+    }
+
+    public function testRegister()
+    {
+        $this->container->register('test', function () {
+            return new stdClass;
+        });
+
+        $this->assertTrue($this->container->has('test'));
+
+        $this->container->register('test2', [$this, 'createObject']);
+
+        $this->assertTrue($this->container->has('test2'));
     }
 
     public function testUnregister()
@@ -94,12 +115,43 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
 
         $this->assertTrue($this->container->has('name'));
 
-        $this->assertTrue($this->container->get('name') instanceof stdClass);
+        $this->assertInstanceOf('stdClass', $this->container->get('name'));
 
         $this->container->unregister('name');
 
         $this->setExpectedException('\webdeveric\DI\Exceptions\UnresolvableClassException');
 
         $this->container->get('name');
+    }
+
+    public function testUnregisterFactory()
+    {
+        $this->container->factory('test', function () {
+            return new stdClass;
+        });
+
+        $this->assertInstanceOf('stdClass', $this->container->get('test'));
+
+        $this->container->unregister('test');
+
+        $this->assertFalse($this->container->has('test'));
+    }
+
+    public function testUnresolvableAlias()
+    {
+        $this->container->alias('test1', 'test2');
+
+        $this->container->alias('test2', 'test1');
+
+        $this->setExpectedException('\webdeveric\DI\Exceptions\UnresolvableAliasException');
+
+        $this->container->get('test1');
+    }
+
+    public function testGet()
+    {
+        $this->container->instance('test', new stdClass);
+
+        $this->assertTrue($this->container->get('test') === $this->container->get('TEST'));
     }
 }

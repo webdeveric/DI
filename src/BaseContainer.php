@@ -96,13 +96,7 @@ class BaseContainer
      */
     public function register($name, callable $callback)
     {
-        $callback = $this->makeClosure($callback);
-
-        if ($callback !== false) {
-            return $this->callbacks[ $name ] = $callback;
-        }
-
-        return false;
+        return $this->callbacks[ $name ] = $this->makeClosure($callback);
     }
 
     /**
@@ -239,6 +233,8 @@ class BaseContainer
      */
     public function get($name)
     {
+        $thrownException = null;
+
         foreach ([ false, true ] as $lowercase) {
             try {
                 if ($lowercase) {
@@ -267,27 +263,31 @@ class BaseContainer
 
                 // Figure it out with Reflection.
                 return $this->resolve($name);
+            } catch (UnresolvableAliasException $e) {
+                throw $e;
             } catch (Exception $e) {
-                throw new UnresolvableClassException($e->getMessage());
+                $thrownException = new UnresolvableClassException($e->getMessage());
             }
         }
+
+        throw $thrownException;
     }
 
     /**
      * Convert a callable into a Closure, if needed.
      *
      * @param  callable $callback
-     * @return callable
+     * @return Closure
      */
     protected function makeClosure(callable $callback)
     {
-        if ($callback instanceof Closure) {
-            return $callback;
+        if (! ($callback instanceof Closure)) {
+            $callback = function (Container $container) use ($callback) {
+                return call_user_func($callback, $container);
+            };
         }
 
-        return function (Container $container) use (&$callback) {
-            return call_user_func($callback, $container);
-        };
+        return $callback;
     }
 
     /**
