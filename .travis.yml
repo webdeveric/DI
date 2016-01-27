@@ -1,0 +1,23 @@
+language: php
+
+php:
+  - '5.4'
+  - '5.5'
+  - '5.6'
+  - '7.0'
+  - hhvm
+
+before_script:
+  - composer self-update
+  - composer install --no-interaction
+  - composer dump-autoload -o
+
+script: phpunit
+
+after_script:
+  - vendor/bin/test-reporter
+
+addons:
+  code_climate:
+    repo_token:
+      secure: "mUikHkfqRYuyUaDHfbG3bpF0C3InyrsZpTAg4dHYHuZVR9xVeNHwasRXhBCpZ+fbBenkUil/XWSEpSvtvnBDnQMTwEtAzQhzIOx1Bz1DiQQoaSQAMgX2jewLgBnh/hHBA4ojaH8p7FPgF9WYHyxrvetv3UHXb44WI460IqZzw7df6tyBkTQQ652hLf4EQ/6A8AIIYJEl7d1UEcQI0Ipw+dhns37CTQo63JFSINAxH4C3qEgDst9IfzOkUqcFck7gkTeJzgHRkFVCD37ueG8lfFXVCWlrOulDz8pxIsaD/dwqanDMn/tjJExNWGTouRbERT9UoK0A+pPelvJXwyOYfDpP7YI9UIwMqIqtVfCJ4PofilLy4i1AjPRnffWHQYuFhk3ZYS/+vje8LFiyKQoVaRwXNMZGelaHOSfh+1W/0JhwZK3xY4tvTsbKFRM1RbaaSOnz1v/q7w534coFyj/9YDp64KYzQM3lA2DPjaE/NiRxbMTsXm6QS0roPPN1OUyL6lq+ChXo2QE8Xlo6iy7mMKAJRY8LCmEawL433lypFAbBCCCVe+u4uTvZg501DO45SoIzHYIYAAjJXAvE/iEO5juPAezQw20xl6J6Rl8gYmK9yE6b/4sZa+RprPNd8Q5ziQilz07Vc5C5azZR5HTQ/XeXcWr6BkwB0WmoqwQspwo="
