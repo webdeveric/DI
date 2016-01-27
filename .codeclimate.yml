@@ -17,3 +17,4 @@ ratings:
   - "**.php"
 exclude_paths:
 - tests/**/*
+- "phpdoc.xml"
