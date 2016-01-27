@@ -34,7 +34,7 @@ fi
 
 printf "${YELLOW}Running mess detector...${NC} "
 
-./vendor/bin/phpmd src/ xml cleancode,codesize,controversial,design,naming,unusedcode --reportfile phpmd-report.xml
+./vendor/bin/phpmd src/ xml cleancode,codesize,controversial,design,naming,unusedcode --reportfile phpmd-report.xml --minimumpriority 1
 
 if [ $? != 0 ]; then
   printf "${RED}Please fix the errors before committing.${NC}\n"
