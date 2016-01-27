@@ -26,6 +26,23 @@ else
   printf "${GREEN}OK${NC}\n"
 fi
 
+# Check for mess detector
+if [ ! -f ./vendor/bin/phpmd ]; then
+  printf "${RED}phpmd not found. ${YELLOW}Did you run composer install?${NC}\n"
+  exit 1
+fi
+
+printf "${YELLOW}Running mess detector...${NC} "
+
+./vendor/bin/phpmd src/ xml cleancode,codesize,controversial,design,naming,unusedcode --reportfile phpmd-report.xml
+
+if [ $? != 0 ]; then
+  printf "${RED}Please fix the errors before committing.${NC}\n"
+  exit 1
+else
+  printf "${GREEN}OK${NC}\n"
+fi
+
 # Run unit tests
 if [ ! -f ./vendor/bin/phpunit ]; then
   printf "${RED}phpunit not found. ${YELLOW}Did you run composer install?${NC}\n"
