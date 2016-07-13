@@ -74,7 +74,7 @@ class BaseContainer implements ContainerInterface
         $this->objects   = [];
         $this->callbacks = [];
         $this->aliases   = [];
-        $this->arguments = [ '*' => [] ];
+        $this->arguments = [];
         $this->factories = new SplObjectStorage();
 
         $this->instance(static::class, $this);
