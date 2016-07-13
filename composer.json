@@ -2,7 +2,7 @@
   "name": "webdeveric/di",
   "license": "proprietary",
   "description": "",
-  "keywords": [ "dependency injection", "container" ],
+  "keywords": [ "dependency injection", "container", "ContainerInterface" ],
   "authors": [
     {
       "name": "Eric King",
@@ -17,7 +17,8 @@
     }
   },
   "require": {
-    "php": ">=5.4.0"
+    "php": ">=5.5.0",
+    "container-interop/container-interop": "^1.1"
   },
   "require-dev": {
     "phpunit/phpunit": "^5.1",

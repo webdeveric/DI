@@ -5,6 +5,6 @@
 
 namespace webdeveric\DI\Exceptions;
 
-class UnresolvableClassException extends UnresolvableException
+class UnresolvableClassException extends ContainerException
 {
 }

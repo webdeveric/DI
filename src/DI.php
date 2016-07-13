@@ -8,8 +8,6 @@
 namespace webdeveric\DI;
 
 use ArrayAccess;
-use ArrayIterator;
-use IteratorAggregate;
 
 /**
  * Dependency injection container.
@@ -17,10 +15,11 @@ use IteratorAggregate;
  * This is where the _magic_ happens.
  *
  */
-class DI extends BaseContainer implements ArrayAccess, IteratorAggregate
+class DI extends BaseContainer implements ArrayAccess
 {
     /**
      * Call the container like its a function.
+     *
      * @param string $name
      * @return object
      */
@@ -108,13 +107,5 @@ class DI extends BaseContainer implements ArrayAccess, IteratorAggregate
     public function offsetExists($key)
     {
         return $this->__isset($key);
-    }
-
-    /**
-     * @return ArrayIterator
-     */
-    public function getIterator()
-    {
-        return new ArrayIterator($this->objects);
     }
 }

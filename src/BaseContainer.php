@@ -11,8 +11,12 @@ use SplObjectStorage;
 use Closure;
 use Exception;
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionException;
 use ReflectionParameter;
+use Interop\Container\ContainerInterface;
+use webdeveric\DI\Exceptions\NotFoundException;
+use webdeveric\DI\Exceptions\ContainerException;
 use webdeveric\DI\Exceptions\UnresolvableAliasException;
 use webdeveric\DI\Exceptions\UnresolvableClassException;
 use webdeveric\DI\Exceptions\UnresolvableParameterException;
@@ -30,7 +34,7 @@ use webdeveric\DI\Exceptions\UnresolvableParameterException;
  * 4. Create aliases for classes/interfaces.
  *    This is so you can associate an abstract class or interface to a concrete class instance (1) or factory (2)
  */
-class BaseContainer
+class BaseContainer implements ContainerInterface
 {
     /**
      * @var array
@@ -60,19 +64,21 @@ class BaseContainer
     /**
      * @var int
      */
-    protected $aliasResolveLimit;
+    const ALIAS_RESOLVE_LIMIT = 50;
 
     /**
-     * Create a new Container instance.
+     * Create a new instance.
      */
     public function __construct()
     {
         $this->objects   = [];
         $this->callbacks = [];
         $this->aliases   = [];
-        $this->arguments = [];
+        $this->arguments = [ '*' => [] ];
         $this->factories = new SplObjectStorage();
-        $this->aliasResolveLimit = 50;
+
+        $this->instance(static::class, $this);
+        $this->alias(ContainerInterface::class, static::class);
     }
 
     /**
@@ -108,6 +114,7 @@ class BaseContainer
     {
         if (isset($this->callbacks[ $name ])) {
             $callback = $this->callbacks[ $name ];
+
             if ($this->factories->contains($callback)) {
                 $this->factories->detach($callback);
             }
@@ -142,22 +149,20 @@ class BaseContainer
      */
     protected function resolveAlias($alias)
     {
-        if (! isset($this->aliases[ $alias ])) {
-            return $alias;
+        if (isset($this->aliases[ $alias ])) {
+            $counter = 0;
+            $initialAlias = $alias;
+
+            do {
+                $alias = $this->aliases[ $alias ];
+
+                if (++$counter > self::ALIAS_RESOLVE_LIMIT) {
+                    throw new UnresolvableAliasException(
+                        sprintf('Alias resolve limit reached for \'%1$s\' at alias \'%2$s\'', $initialAlias, $alias)
+                    );
+                }
+            } while (isset($this->aliases[ $alias ])); // Do it again if there is another alias for the current $alias
         }
-
-        // We know the $alias index already exists because of the previous statement.
-        $counter = 0;
-
-        do {
-            $alias = $this->aliases[ $alias ];
-
-            if (++$counter > $this->aliasResolveLimit) {
-                throw new UnresolvableAliasException(
-                    sprintf('Alias resolve limit (50) reached for %1$s at alias %1$s', func_get_arg(0), $alias)
-                );
-            }
-        } while (isset($this->aliases[ $alias ])); // Do it again if there is another alias for the current $alias
 
         return $alias;
     }
@@ -172,7 +177,7 @@ class BaseContainer
     public function instance($name, $object)
     {
         if (! is_object($object)) {
-            return false;
+            throw new ContainerException('$object must be an object');
         }
 
         return $this->objects[ $name ] = $object;
@@ -189,6 +194,7 @@ class BaseContainer
     {
         $callback = $this->register($name, $callback);
         $this->factories->attach($callback);
+
         return $callback;
     }
 
@@ -216,7 +222,7 @@ class BaseContainer
     {
         $fields = [ 'callbacks', 'objects', 'aliases', 'arguments' ];
 
-        foreach ($fields as &$field) {
+        foreach ($fields as $field) {
             if (array_key_exists($name, $this->$field)) {
                 return true;
             }
@@ -263,14 +269,12 @@ class BaseContainer
 
                 // Figure it out with Reflection.
                 return $this->resolve($name);
-            } catch (UnresolvableAliasException $e) {
-                throw $e;
             } catch (Exception $e) {
-                $thrownException = new UnresolvableClassException($e->getMessage());
+                $thrownException = $e;
             }
         }
 
-        throw $thrownException;
+        throw $this->has($name) ? $thrownException : new NotFoundException("{$name} not found");
     }
 
     /**
@@ -282,7 +286,7 @@ class BaseContainer
     protected function makeClosure(callable $callback)
     {
         if (! ($callback instanceof Closure)) {
-            $callback = function (Container $container) use ($callback) {
+            $callback = function (ContainerInterface $container) use ($callback) {
                 return call_user_func($callback, $container);
             };
         }
@@ -299,41 +303,33 @@ class BaseContainer
     public function resolve($name)
     {
         try {
-            $ref = new ReflectionClass($name);
+            $refClass = new ReflectionClass($name);
 
-            if ($ref->isInstantiable()) {
-                $constructor = $ref->getConstructor();
+            if ($refClass->isInstantiable()) {
+                $constructor = $refClass->getConstructor();
 
-                if (is_null($constructor)) {
-                    // Nothing to construct so no arguments are needed
+                $parameters = $constructor instanceof ReflectionMethod ? $constructor->getParameters() : null;
+
+                if (empty($parameters)) {
                     return new $name;
                 }
 
-                $params = $constructor->getParameters();
-
-                if (empty($params)) {
-                    // Constructor doesn't take any parameters so just construct it and send it back.
-                    return new $name;
+                foreach ($parameters as &$param) {
+                    $param = $this->resolveParameter($param, $refClass);
                 }
 
-                $parameters = [];
-
-                foreach ($params as &$param) {
-                    $parameters[] = $this->resolveParameter($param, $ref);
-                }
-
-                return $ref->newInstanceArgs($parameters);
+                return $refClass->newInstanceArgs($parameters);
             }
 
             switch (true) {
-                case $ref->isAbstract():
-                    throw new UnresolvableClassException("Unresolvable Abstract Class [ $name ]");
-                case $ref->isInterface():
-                    throw new UnresolvableClassException("Unresolvable Interface [ $name ]");
-                case $ref->isTrait():
-                    throw new UnresolvableClassException("Unresolvable Trait [ $name ]");
+                case $refClass->isAbstract():
+                    throw new UnresolvableClassException("Unresolvable Abstract Class '{$name}'");
+                case $refClass->isInterface():
+                    throw new UnresolvableClassException("Unresolvable Interface '{$name}'");
+                case $refClass->isTrait():
+                    throw new UnresolvableClassException("Unresolvable Trait '{$name}'");
                 default:
-                    throw new UnresolvableClassException("Unresolvable Class [ $name ]");
+                    throw new UnresolvableClassException("Unresolvable Class '{$name}'");
             }
         } catch (ReflectionException $e) { // Class does not exist
             throw new UnresolvableClassException($e->getMessage());
@@ -344,26 +340,26 @@ class BaseContainer
      * Resolve a parameter.
      *
      * @param  ReflectionParameter $param
-     * @param  ReflectionClass     $ref
+     * @param  ReflectionClass     $refClass
      * @throws UnresolvableParameterException
      * @return mixed
      */
-    protected function resolveParameter(ReflectionParameter $param, ReflectionClass $ref)
+    protected function resolveParameter(ReflectionParameter $param, ReflectionClass $refClass)
     {
-        $refClass = $param->getClass();
+        $paramClass = $param->getClass();
 
-        if (is_null($refClass)) {
-            if ($param->isDefaultValueAvailable()) {
-                return $param->getDefaultValue();
-            }
-
+        if (is_null($paramClass)) {
             if (array_key_exists($param->name, $this->arguments)) {
                 return $this->arguments[ $param->name ];
             }
 
-            throw new UnresolvableParameterException(sprintf('Unresolvable %2$s - %1$s', $param, $ref->getName()));
+            if ($param->isDefaultValueAvailable()) {
+                return $param->getDefaultValue();
+            }
+
+            throw new UnresolvableParameterException(sprintf('Unresolvable %2$s - %1$s', $param, $refClass->getName()));
         }
 
-        return $this->get($refClass->name);
+        return $this->get($paramClass->name);
     }
 }

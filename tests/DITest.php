@@ -3,8 +3,8 @@
 namespace webdeveric\DI\Tests;
 
 use stdClass;
-use ArrayIterator;
 use PHPUnit_Framework_TestCase;
+use webdeveric\DI\BaseContainer;
 use webdeveric\DI\DI;
 
 class DITest extends PHPUnit_Framework_TestCase
@@ -21,7 +21,8 @@ class DITest extends PHPUnit_Framework_TestCase
 
     public function testConstructor()
     {
-        $this->assertTrue($this->container instanceof DI);
+        $this->assertInstanceOf(BaseContainer::class, $this->container);
+        $this->assertInstanceOf(DI::class, $this->container);
     }
 
     public function testInvoke()
@@ -32,7 +33,7 @@ class DITest extends PHPUnit_Framework_TestCase
 
     public function testGetter()
     {
-        $this->assertTrue($this->container->stdClass instanceof stdClass);
+        $this->assertInstanceOf(stdClass::class, $this->container->stdClass);
     }
 
     public function testSetter()
@@ -41,7 +42,7 @@ class DITest extends PHPUnit_Framework_TestCase
             return new stdClass;
         };
 
-        $this->assertTrue($this->container->get('obj') instanceof stdClass);
+        $this->assertInstanceOf(stdClass::class, $this->container->get('obj'));
     }
 
     public function testIsset()
@@ -49,18 +50,5 @@ class DITest extends PHPUnit_Framework_TestCase
         $this->container->instance('obj', new stdClass);
 
         $this->assertTrue(isset($this->container->obj));
-    }
-
-    public function testIteratorAggregate()
-    {
-        $this->assertTrue($this->container->getIterator() instanceof ArrayIterator);
-
-        $this->container->instance('obj1', new stdClass);
-
-        $this->container->instance('obj2', new stdClass);
-
-        foreach ($this->container as $obj) {
-            $this->assertTrue($obj instanceof stdClass);
-        }
     }
 }
