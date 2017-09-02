@@ -3,11 +3,11 @@
 namespace webdeveric\DI\Tests;
 
 use stdClass;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use webdeveric\DI\BaseContainer;
 use webdeveric\DI\DI;
 
-class DITest extends PHPUnit_Framework_TestCase
+class DITest extends TestCase
 {
     public function setUp()
     {

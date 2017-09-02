@@ -5,6 +5,8 @@
  * @author Eric King <eric@webdeveric.com>
  */
 
+declare(strict_types=1);
+
 namespace webdeveric\DI;
 
 use SplObjectStorage;
@@ -14,7 +16,7 @@ use ReflectionClass;
 use ReflectionMethod;
 use ReflectionException;
 use ReflectionParameter;
-use Interop\Container\ContainerInterface;
+use Psr\Container\ContainerInterface;
 use webdeveric\DI\Exceptions\NotFoundException;
 use webdeveric\DI\Exceptions\ContainerException;
 use webdeveric\DI\Exceptions\UnresolvableAliasException;
@@ -88,7 +90,7 @@ class BaseContainer implements ContainerInterface
      * @param  mixed  $value
      * @return void
      */
-    public function arg($key, $value)
+    public function arg(string $key, $value)
     {
         $this->arguments[ $key ] = $value;
     }
@@ -100,7 +102,7 @@ class BaseContainer implements ContainerInterface
      * @param  callable $callback
      * @return false|object
      */
-    public function register($name, callable $callback)
+    public function register(string $name, callable $callback)
     {
         return $this->callbacks[ $name ] = $this->makeClosure($callback);
     }
@@ -110,7 +112,7 @@ class BaseContainer implements ContainerInterface
      * @param string $name
      * @return void
      */
-    public function unregister($name)
+    public function unregister(string $name)
     {
         if (isset($this->callbacks[ $name ])) {
             $callback = $this->callbacks[ $name ];
@@ -135,7 +137,7 @@ class BaseContainer implements ContainerInterface
      * @param  string $original
      * @return void
      */
-    public function alias($alias, $original)
+    public function alias(string $alias, string $original)
     {
         $this->aliases[ $alias ] = $original;
     }
@@ -147,7 +149,7 @@ class BaseContainer implements ContainerInterface
      * @throws UnresolvableAliasException Thrown if alias has not been resolved within the resolve limit.
      * @return string
      */
-    protected function resolveAlias($alias)
+    protected function resolveAlias(string $alias) : string
     {
         if (isset($this->aliases[ $alias ])) {
             $counter = 0;
@@ -174,7 +176,7 @@ class BaseContainer implements ContainerInterface
      * @param  object $object
      * @return false|object
      */
-    public function instance($name, $object)
+    public function instance(string $name, $object)
     {
         if (! is_object($object)) {
             throw new ContainerException('$object must be an object');
@@ -190,7 +192,7 @@ class BaseContainer implements ContainerInterface
      * @param  callable $callback
      * @return callable
      */
-    public function factory($name, callable $callback)
+    public function factory(string $name, callable $callback) : callable
     {
         $callback = $this->register($name, $callback);
         $this->factories->attach($callback);
@@ -203,7 +205,7 @@ class BaseContainer implements ContainerInterface
      * @param string $name
      * @return bool
      */
-    public function isFactory($name)
+    public function isFactory(string $name) : bool
     {
         if (isset($this->callbacks[ $name ])) {
             return $this->factories->contains($this->callbacks[ $name ]);
@@ -218,7 +220,7 @@ class BaseContainer implements ContainerInterface
      * @param  string $name
      * @return bool
      */
-    public function has($name)
+    public function has($name) : bool
     {
         $fields = [ 'callbacks', 'objects', 'aliases', 'arguments' ];
 
@@ -283,7 +285,7 @@ class BaseContainer implements ContainerInterface
      * @param  callable $callback
      * @return Closure
      */
-    protected function makeClosure(callable $callback)
+    protected function makeClosure(callable $callback) : Closure
     {
         if (! ($callback instanceof Closure)) {
             $callback = function (ContainerInterface $container) use ($callback) {
@@ -300,13 +302,13 @@ class BaseContainer implements ContainerInterface
      * @param  string $name
      * @return object
      */
-    public function resolve($name)
+    public function resolve(string $name)
     {
         try {
-            $refClass = new ReflectionClass($name);
+            $ref = new ReflectionClass($name);
 
-            if ($refClass->isInstantiable()) {
-                $constructor = $refClass->getConstructor();
+            if ($ref->isInstantiable()) {
+                $constructor = $ref->getConstructor();
 
                 $parameters = $constructor instanceof ReflectionMethod ? $constructor->getParameters() : null;
 
@@ -315,22 +317,17 @@ class BaseContainer implements ContainerInterface
                 }
 
                 foreach ($parameters as &$param) {
-                    $param = $this->resolveParameter($param, $refClass);
+                    $param = $this->resolveParameter($param, $ref);
                 }
 
-                return $refClass->newInstanceArgs($parameters);
+                return $ref->newInstanceArgs($parameters);
             }
 
-            switch (true) {
-                case $refClass->isAbstract():
-                    throw new UnresolvableClassException("Unresolvable Abstract Class '{$name}'");
-                case $refClass->isInterface():
-                    throw new UnresolvableClassException("Unresolvable Interface '{$name}'");
-                case $refClass->isTrait():
-                    throw new UnresolvableClassException("Unresolvable Trait '{$name}'");
-                default:
-                    throw new UnresolvableClassException("Unresolvable Class '{$name}'");
-            }
+            $type = $ref->isAbstract() ? 'Abstract Class' :
+                $ref->isInterface() ? 'Interface' :
+                $ref->isTrait() ? 'Trait' : 'Class';
+
+            throw new UnresolvableClassException("Unresolvable {$type} '{$name}'");
         } catch (ReflectionException $e) { // Class does not exist
             throw new UnresolvableClassException($e->getMessage());
         }

@@ -5,6 +5,8 @@
  * @author Eric King <eric@webdeveric.com>
  */
 
+declare(strict_types=1);
+
 namespace webdeveric\DI;
 
 use ArrayAccess;
@@ -23,7 +25,7 @@ class DI extends BaseContainer implements ArrayAccess
      * @param string $name
      * @return object
      */
-    public function __invoke($name)
+    public function __invoke(string $name)
     {
         return $this->get($name);
     }
@@ -32,7 +34,7 @@ class DI extends BaseContainer implements ArrayAccess
      * @param string $name
      * @return object
      */
-    public function __get($name)
+    public function __get(string $name)
     {
         return $this->get($name);
     }
@@ -42,7 +44,7 @@ class DI extends BaseContainer implements ArrayAccess
      * @param callable $callback
      * @return false|object
      */
-    public function __set($name, callable $callback)
+    public function __set(string $name, callable $callback)
     {
         return $this->register($name, $callback);
     }
@@ -51,7 +53,7 @@ class DI extends BaseContainer implements ArrayAccess
      * @param string $name
      * @return bool
      */
-    public function __isset($name)
+    public function __isset(string $name)
     {
         return isset($this->objects[ $name ]);
     }
@@ -60,7 +62,7 @@ class DI extends BaseContainer implements ArrayAccess
      * @param string $name
      * @return void
      */
-    public function __unset($name)
+    public function __unset(string $name)
     {
         if (isset($this->objects[ $name ])) {
             $this->factories->detach($this->objects[ $name ]);
@@ -75,7 +77,7 @@ class DI extends BaseContainer implements ArrayAccess
      */
     public function offsetSet($key, $callback)
     {
-        if (!is_callable($callback)) {
+        if (! is_callable($callback)) {
             return false;
         }
 

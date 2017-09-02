@@ -29,6 +29,8 @@ Run `composer install` to get dependencies.
 
 ### Coding Style: [PSR-2](http://www.php-fig.org/psr/psr-2/)
 
+Run `composer setup-hooks` to setup the git `pre-commit` hook.
+
 There is a `pre-commit` hook that will run `phpcs` to check the coding style.
 If it fails, you will not be allowed to commit.
 

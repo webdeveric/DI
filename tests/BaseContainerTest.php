@@ -3,13 +3,13 @@
 namespace webdeveric\DI\Tests;
 
 use stdClass;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use webdeveric\DI\BaseContainer;
 use webdeveric\DI\Exceptions\NotFoundException;
 use webdeveric\DI\Exceptions\ContainerException;
 use webdeveric\DI\Exceptions\UnresolvableAliasException;
 
-class BaseContainerTest extends PHPUnit_Framework_TestCase
+class BaseContainerTest extends TestCase
 {
     public function setUp()
     {
@@ -33,7 +33,7 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
 
     public function testClassNotFound()
     {
-        $this->setExpectedException(NotFoundException::class);
+        $this->expectException(NotFoundException::class);
 
         $this->container->get('SomeFakeClassName');
     }
@@ -86,7 +86,7 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
             $container->alias("alias{$i}", "alias{$j}");
         }
 
-        $this->setExpectedException(UnresolvableAliasException::class);
+        $this->expectException(UnresolvableAliasException::class);
 
         $this->container->get('alias0');
     }
@@ -101,7 +101,7 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
 
         $this->assertEquals($this->container->get('name'), $name);
 
-        $this->setExpectedException(ContainerException::class);
+        $this->expectException(ContainerException::class);
 
         $this->container->instance('false', false);
     }
@@ -137,7 +137,7 @@ class BaseContainerTest extends PHPUnit_Framework_TestCase
 
         $this->container->unregister('name');
 
-        $this->setExpectedException(NotFoundException::class);
+        $this->expectException(NotFoundException::class);
 
         $this->container->get('name');
     }

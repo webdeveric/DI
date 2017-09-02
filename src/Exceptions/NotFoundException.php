@@ -5,8 +5,8 @@
 
 namespace webdeveric\DI\Exceptions;
 
-use Interop\Container\Exception\NotFoundException as InteropContainerNotFoundException;
+use Psr\Container\NotFoundExceptionInterface;
 
-class NotFoundException extends \Exception implements InteropContainerNotFoundException
+class NotFoundException extends \Exception implements NotFoundExceptionInterface
 {
 }

@@ -2,7 +2,11 @@
   "name": "webdeveric/di",
   "license": "proprietary",
   "description": "",
-  "keywords": [ "dependency injection", "container", "ContainerInterface" ],
+  "keywords": [
+    "dependency injection",
+    "container",
+    "ContainerInterface"
+  ],
   "authors": [
     {
       "name": "Eric King",
@@ -16,20 +20,26 @@
       "webdeveric\\DI\\": "src/"
     }
   },
+  "config": {
+    "sort-packages": true
+  },
+  "minimum-stability": "stable",
+  "prefer-stable": true,
   "require": {
-    "php": ">=5.5.0",
-    "container-interop/container-interop": "^1.1"
+    "php": ">=7.0",
+    "psr/container": "^1.0"
   },
   "require-dev": {
-    "phpunit/phpunit": "^5.1",
-    "phpdocumentor/phpdocumentor": "^2.8",
-    "squizlabs/php_codesniffer": "^2.5",
-    "phpmd/phpmd": "^2.3",
-    "codeclimate/php-test-reporter": "dev-master"
+    "codeclimate/php-test-reporter": "dev-master",
+    "phpmd/phpmd": "^2.6",
+    "phpunit/phpunit": "^6.3",
+    "squizlabs/php_codesniffer": "^3.0"
   },
   "scripts": {
-    "post-install-cmd": [
-      "bash .git-hooks/setup.sh"
+    "test": "phpunit --colors=always --coverage-text",
+    "setup-hooks": [
+      "php -r \"copy('./hooks/pre-commit', '.git/hooks/pre-commit');\"",
+      "php -r \"chmod('.git/hooks/pre-commit', 0700);\""
     ]
   }
 }

@@ -3,14 +3,14 @@
 namespace webdeveric\DI\Tests;
 
 use Exception;
-use PHPUnit_Framework_TestCase;
+use PHPUnit\Framework\TestCase;
 use webdeveric\DI\Exceptions\NotFoundException;
 use webdeveric\DI\Exceptions\ContainerException;
 use webdeveric\DI\Exceptions\UnresolvableAliasException;
 use webdeveric\DI\Exceptions\UnresolvableClassException;
 use webdeveric\DI\Exceptions\UnresolvableParameterException;
 
-class ExceptionsTest extends PHPUnit_Framework_TestCase
+class ExceptionsTest extends TestCase
 {
     public function testInheritance()
     {
