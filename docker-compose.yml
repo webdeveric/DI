@@ -1,0 +1,17 @@
+version: '3'
+services:
+  phpunit:
+    image: phpunit/phpunit:6.0.6
+    volumes:
+      - ./:/app
+
+  composer:
+    image: composer:latest
+    volumes:
+      - ./:/app
+      - $SSH_AUTH_SOCK:/root/ssh-agent
+      - $HOME/.ssh:/root/.ssh
+      - $HOME/.composer/cache:/composer-cache
+    environment:
+      - SSH_AUTH_SOCK=/root/ssh-agent
+      - COMPOSER_CACHE_DIR=/composer-cache
