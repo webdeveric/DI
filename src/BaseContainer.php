@@ -313,7 +313,7 @@ class BaseContainer implements ContainerInterface
                 $parameters = $constructor instanceof ReflectionMethod ? $constructor->getParameters() : null;
 
                 if (empty($parameters)) {
-                    return new $name;
+                    return $ref->newInstance();
                 }
 
                 foreach ($parameters as &$param) {
